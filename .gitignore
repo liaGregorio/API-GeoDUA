@@ -1,0 +1,11 @@
+node_modules/
+package-lock.json
+
+.env
+
+logs
+*.log
+npm-debug.log*
+
+# Arquivos específicos do Sequelize
+config/config.json
