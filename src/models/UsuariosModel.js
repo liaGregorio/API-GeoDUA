@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const AcessibilidadesModel = require('./AcessibilidadesModel');
 const UsuariosTiposModel = require('./UsuariosTiposModel');
 
 const UsuariosModel = sequelize.define('UsuariosModel', {
@@ -25,15 +24,7 @@ const UsuariosModel = sequelize.define('UsuariosModel', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  acessibilidade: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'acessibilidades',
-      key: 'id'
-    }
-  },
-  tipo: {
+  id_usuarios_tipos: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {

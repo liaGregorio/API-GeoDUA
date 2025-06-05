@@ -1,5 +1,5 @@
 const sequelize = require('../config/database');
-const { UsuariosModel, AcessibilidadesModel, UsuariosTiposModel } = require('../models');
+const { UsuariosModel, UsuariosTiposModel } = require('../models');
 
 // Obter todos os usuários
 const getAllUsuarios = async (req, res, next) => {
@@ -7,12 +7,6 @@ const getAllUsuarios = async (req, res, next) => {
     const usuarios = await UsuariosModel.findAll({
       attributes: { exclude: ['senha'] }, // Não retorna as senhas
       include: [
-        {
-          model: AcessibilidadesModel,
-          as: 'dadosAcessibilidade',
-          attributes: ['id', 'nome'],
-          required: false
-        },
         {
           model: UsuariosTiposModel,
           as: 'tipoUsuario',
@@ -39,12 +33,6 @@ const getUsuarioById = async (req, res, next) => {
     const usuario = await UsuariosModel.findByPk(id, {
       attributes: { exclude: ['senha'] },
       include: [
-        {
-          model: AcessibilidadesModel,
-          as: 'dadosAcessibilidade',
-          attributes: ['id', 'nome'],
-          required: false
-        },
         {
           model: UsuariosTiposModel,
           as: 'tipoUsuario',
