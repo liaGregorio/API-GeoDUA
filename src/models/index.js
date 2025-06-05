@@ -2,12 +2,12 @@ const UsuariosModel = require('./UsuariosModel');
 const UsuariosTiposModel = require('./UsuariosTiposModel');
 
 UsuariosModel.belongsTo(UsuariosTiposModel, { 
-  foreignKey: 'tipo',
+  foreignKey: 'id_usuarios_tipos',
   as: 'tipoUsuario'
 });
 
 UsuariosTiposModel.hasMany(UsuariosModel, { 
-  foreignKey: 'tipo',
+  foreignKey: 'id_usuarios_tipos',
   as: 'usuarios'
 });
 
