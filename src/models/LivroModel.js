@@ -12,7 +12,7 @@ const LivroModel = sequelize.define('LivroModel', {
     allowNull: false
   }
 }, {
-  tableName: 'livro',       
+  tableName: 'livros',       
   timestamps: false,
   underscored: false   
 });
