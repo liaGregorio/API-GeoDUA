@@ -1,5 +1,6 @@
 const UsuariosModel = require('./UsuariosModel');
 const UsuariosTiposModel = require('./UsuariosTiposModel');
+const LivroModel = require('./LivroModel');
 
 UsuariosModel.belongsTo(UsuariosTiposModel, { 
   foreignKey: 'id_usuarios_tipos',
@@ -13,5 +14,6 @@ UsuariosTiposModel.hasMany(UsuariosModel, {
 
 module.exports = {
   UsuariosModel,
-  UsuariosTiposModel
+  UsuariosTiposModel,
+  LivroModel
 };
