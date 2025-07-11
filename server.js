@@ -12,7 +12,7 @@ const startServer = async () => {
   app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
     console.log(`Ambiente: ${process.env.NODE_ENV}`);
-    console.log(`API disponível em: http://localhost:${PORT}/api/usuarios`);
+    console.log(`API disponível em: http://localhost:${PORT}/api`);
   });
 };
 

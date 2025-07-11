@@ -14,9 +14,17 @@ app.use(express.urlencoded({ extended: true }));
 // Configuração do CORS
 app.use(cors());
 
-// Rota de saúde/status da API
+// Rota de saúde/status da API (sem autenticação)
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'API está funcionando' });
+});
+
+// Rota de teste para autenticação (com middleware de API Key)
+app.get('/api/test-auth', require('./middleware/auth').validateApiKey, (req, res) => {
+  res.status(200).json({ 
+    message: 'Autenticação bem-sucedida!',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Registra todas as rotas da aplicação
