@@ -3,6 +3,9 @@
  * Valida se a API Key fornecida está entre as chaves autorizadas
  */
 
+const jwt = require('jsonwebtoken');
+const { UsuariosModel, UsuariosTiposModel } = require('../models');
+
 const validateApiKey = (req, res, next) => {
   // Obter a API Key do cabeçalho da requisição
   const apiKey = req.headers['x-api-key'] || req.headers['authorization'];
@@ -42,6 +45,84 @@ const validateApiKey = (req, res, next) => {
 };
 
 /**
+ * Middleware de autenticação JWT
+ * Valida se o token JWT fornecido é válido
+ */
+const authenticateToken = async (req, res, next) => {
+  try {
+    // Obter o token do cabeçalho Authorization
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token de acesso requerido'
+      });
+    }
+
+    // Verificar e decodificar o token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Buscar o usuário no banco de dados
+    const usuario = await UsuariosModel.findByPk(decoded.id, {
+      attributes: { exclude: ['senha'] },
+      include: [
+        {
+          model: UsuariosTiposModel,
+          as: 'tipoUsuario',
+          attributes: ['id', 'nome']
+        }
+      ]
+    });
+
+    if (!usuario) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token inválido - usuário não encontrado'
+      });
+    }
+
+    // Anexar informações do usuário à requisição
+    req.user = usuario;
+    next();
+
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expirado'
+      });
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token inválido'
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+/**
+ * Middleware para verificar se o usuário é admin
+ */
+const requireAdmin = (req, res, next) => {
+  if (req.user.id_usuarios_tipos !== 1) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado. Apenas administradores podem acessar este recurso.'
+    });
+  }
+  next();
+};
+
+/**
  * Logs de auditoria
  */
 const logApiUsage = (req, res, next) => {
@@ -56,5 +137,7 @@ const logApiUsage = (req, res, next) => {
 
 module.exports = {
   validateApiKey,
+  authenticateToken,
+  requireAdmin,
   logApiUsage
 };
