@@ -33,10 +33,10 @@ const SecaoModel = sequelize.define('Secao', {
     allowNull: true,
     field: 'original'
   },
-  texto3d: {
+  link3d: {
     type: DataTypes.TEXT,
     allowNull: true,
-    field: '3d'
+    field: 'link3d'
   },
   feedback: {
     type: DataTypes.BOOLEAN,

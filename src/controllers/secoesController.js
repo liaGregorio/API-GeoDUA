@@ -91,7 +91,7 @@ const getSecaoById = async (req, res) => {
 // POST - Criar nova seção
 const createSecao = async (req, res) => {
   try {
-    const { prompt, titulo, resumo, ordem, original, texto3d, feedback, ordem3d, id_capitulo } = req.body;
+    const { prompt, titulo, resumo, ordem, original, link3d, feedback, ordem3d, id_capitulo } = req.body;
 
     // Validações obrigatórias
     if (!ordem || !id_capitulo) {
@@ -128,7 +128,7 @@ const createSecao = async (req, res) => {
       resumo,
       ordem,
       original,
-      texto3d,
+      link3d,
       feedback: feedback || false,
       ordem3d,
       id_capitulo
@@ -163,7 +163,7 @@ const createSecao = async (req, res) => {
 const updateSecao = async (req, res) => {
   try {
     const { id } = req.params;
-    const { prompt, titulo, resumo, ordem, original, texto3d, feedback, ordem3d, id_capitulo } = req.body;
+    const { prompt, titulo, resumo, ordem, original, link3d, feedback, ordem3d, id_capitulo } = req.body;
 
     const secao = await SecaoModel.findByPk(id);
     if (!secao) {
@@ -209,7 +209,7 @@ const updateSecao = async (req, res) => {
       resumo: resumo !== undefined ? resumo : secao.resumo,
       ordem: ordem || secao.ordem,
       original: original !== undefined ? original : secao.original,
-      texto3d: texto3d !== undefined ? texto3d : secao.texto3d,
+      link3d: link3d !== undefined ? link3d : secao.link3d,
       feedback: feedback !== undefined ? feedback : secao.feedback,
       ordem3d: ordem3d !== undefined ? ordem3d : secao.ordem3d,
       id_capitulo: id_capitulo || secao.id_capitulo
