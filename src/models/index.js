@@ -2,6 +2,9 @@ const UsuariosModel = require('./UsuariosModel');
 const UsuariosTiposModel = require('./UsuariosTiposModel');
 const LivroModel = require('./LivroModel');
 const CapituloModel = require('./CapituloModel');
+const SecaoModel = require('./SecaoModel');
+const ImagemModel = require('./ImagemModel');
+const AudioModel = require('./AudioModel');
 
 // Associações entre Usuarios e UsuariosTipos
 UsuariosModel.belongsTo(UsuariosTiposModel, { 
@@ -47,9 +50,45 @@ CapituloModel.hasMany(CapituloModel, {
   as: 'rascunhos'
 });
 
+// Associações entre Secao e Capitulo
+SecaoModel.belongsTo(CapituloModel, {
+  foreignKey: 'id_capitulo',
+  as: 'capitulo'
+});
+
+CapituloModel.hasMany(SecaoModel, {
+  foreignKey: 'id_capitulo',
+  as: 'secoes'
+});
+
+// Associações entre Imagem e Secao
+ImagemModel.belongsTo(SecaoModel, {
+  foreignKey: 'id_secao',
+  as: 'secao'
+});
+
+SecaoModel.hasMany(ImagemModel, {
+  foreignKey: 'id_secao',
+  as: 'imagens'
+});
+
+// Associações entre Audio e Capitulo
+AudioModel.belongsTo(CapituloModel, {
+  foreignKey: 'id_capitulo',
+  as: 'capitulo'
+});
+
+CapituloModel.hasMany(AudioModel, {
+  foreignKey: 'id_capitulo',
+  as: 'audios'
+});
+
 module.exports = {
   UsuariosModel,
   UsuariosTiposModel,
   LivroModel,
-  CapituloModel
+  CapituloModel,
+  SecaoModel,
+  ImagemModel,
+  AudioModel
 };

@@ -3,6 +3,9 @@ const router = express.Router();
 const usuariosRoutes = require('./usuariosRoutes');
 const livrosRoutes = require('./livrosRoutes');
 const capitulosRoutes = require('./capitulosRoutes');
+const secoesRoutes = require('./secoesRoutes');
+const imagensRoutes = require('./imagensRoutes');
+const audiosRoutes = require('./audiosRoutes');
 const { validateApiKey, logApiUsage } = require('../middleware/auth');
 
 // Aplicar middleware de autenticação em todas as rotas da API
@@ -14,5 +17,8 @@ router.use(validateApiKey);
 router.use('/usuarios', usuariosRoutes);
 router.use('/livros', livrosRoutes);
 router.use('/capitulos', capitulosRoutes);
+router.use('/secoes', secoesRoutes);
+router.use('/imagens', imagensRoutes);
+router.use('/audios', audiosRoutes);
 
 module.exports = router;
