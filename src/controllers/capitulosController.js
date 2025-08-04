@@ -1,4 +1,4 @@
-const { CapituloModel, LivroModel, UsuariosModel } = require('../models');
+const { CapituloModel, LivroModel, UsuariosModel, SecaoModel, ImagemModel, AudioModel } = require('../models');
 
 // GET - Listar capítulos de um livro específico
 const getCapitulos = async (req, res) => {
@@ -249,23 +249,81 @@ const deleteCapitulo = async (req, res) => {
       });
     }
 
-    // Verificar se existem rascunhos referenciando este capítulo
+    // Buscar rascunhos que referenciam este capítulo
     const rascunhos = await CapituloModel.findAll({
       where: { id_capitulo_original: id }
     });
 
+    // Buscar seções que pertencem a este capítulo
+    const secoes = await SecaoModel.findAll({
+      where: { id_capitulo: id }
+    });
+
+    // Buscar seções que pertencem aos rascunhos deste capítulo
+    let secoesRascunhos = [];
     if (rascunhos.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Não é possível deletar este capítulo pois existem rascunhos referenciando ele'
+      const idsRascunhos = rascunhos.map(r => r.id);
+      secoesRascunhos = await SecaoModel.findAll({
+        where: { id_capitulo: idsRascunhos }
       });
     }
 
+    const todasSecoes = [...secoes, ...secoesRascunhos];
+
+    // Buscar áudios que pertencem a este capítulo e aos rascunhos
+    const idsCapitulosParaExcluir = [id, ...rascunhos.map(r => r.id)];
+    const audios = await AudioModel.findAll({
+      where: { id_capitulo: idsCapitulosParaExcluir }
+    });
+
+    // Buscar e excluir imagens das seções
+    if (todasSecoes.length > 0) {
+      const idsSecoes = todasSecoes.map(s => s.id);
+      
+      // Excluir imagens das seções
+      await ImagemModel.destroy({
+        where: { id_secao: idsSecoes }
+      });
+
+      // Excluir seções
+      await SecaoModel.destroy({
+        where: { id: idsSecoes }
+      });
+    }
+
+    // Excluir áudios
+    if (audios.length > 0) {
+      await AudioModel.destroy({
+        where: { id_capitulo: idsCapitulosParaExcluir }
+      });
+    }
+
+    // Excluir rascunhos
+    if (rascunhos.length > 0) {
+      await CapituloModel.destroy({
+        where: { id_capitulo_original: id }
+      });
+    }
+
+    // Excluir o capítulo principal
     await capitulo.destroy();
+
+    const totalRascunhos = rascunhos.length;
+    const totalSecoes = todasSecoes.length;
+    const totalAudios = audios.length;
+    
+    let mensagem = 'Capítulo deletado com sucesso';
+    if (totalRascunhos > 0 || totalSecoes > 0 || totalAudios > 0) {
+      const detalhes = [];
+      if (totalRascunhos > 0) detalhes.push(`${totalRascunhos} rascunho(s)`);
+      if (totalSecoes > 0) detalhes.push(`${totalSecoes} seção(ões) e suas imagens`);
+      if (totalAudios > 0) detalhes.push(`${totalAudios} áudio(s)`);
+      mensagem += ` (${detalhes.join(', ')} também foram excluído(s))`;
+    }
 
     res.status(200).json({
       success: true,
-      message: 'Capítulo deletado com sucesso'
+      message: mensagem
     });
   } catch (error) {
     console.error('Erro ao deletar capítulo:', error);
