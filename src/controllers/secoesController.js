@@ -110,18 +110,6 @@ const createSecao = async (req, res) => {
       });
     }
 
-    // Verificar se já existe uma seção com a mesma ordem no capítulo
-    const secaoExistente = await SecaoModel.findOne({
-      where: { id_capitulo, ordem }
-    });
-
-    if (secaoExistente) {
-      return res.status(400).json({
-        success: false,
-        message: 'Já existe uma seção com esta ordem neste capítulo'
-      });
-    }
-
     const novaSecao = await SecaoModel.create({
       prompt,
       titulo,
@@ -180,25 +168,6 @@ const updateSecao = async (req, res) => {
         return res.status(404).json({
           success: false,
           message: 'Capítulo não encontrado'
-        });
-      }
-    }
-
-    // Se estiver alterando a ordem, verificar duplicação
-    if (ordem && ordem !== secao.ordem) {
-      const capituloId = id_capitulo || secao.id_capitulo;
-      const secaoExistente = await SecaoModel.findOne({
-        where: { 
-          id_capitulo: capituloId, 
-          ordem,
-          id: { [require('sequelize').Op.ne]: id }
-        }
-      });
-
-      if (secaoExistente) {
-        return res.status(400).json({
-          success: false,
-          message: 'Já existe uma seção com esta ordem neste capítulo'
         });
       }
     }
