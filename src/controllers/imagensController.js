@@ -159,36 +159,6 @@ const updateImagem = async (req, res) => {
       });
     }
 
-    // Se estiver alterando a seção, verificar se ela existe
-    if (id_secao && id_secao !== imagem.id_secao) {
-      const secao = await SecaoModel.findByPk(id_secao);
-      if (!secao) {
-        return res.status(404).json({
-          success: false,
-          message: 'Seção não encontrada'
-        });
-      }
-    }
-
-    // Se estiver alterando a ordem, verificar duplicação
-    if (ordem && ordem !== imagem.ordem) {
-      const secaoId = id_secao || imagem.id_secao;
-      const imagemExistente = await ImagemModel.findOne({
-        where: { 
-          id_secao: secaoId, 
-          ordem,
-          id: { [require('sequelize').Op.ne]: id }
-        }
-      });
-
-      if (imagemExistente) {
-        return res.status(400).json({
-          success: false,
-          message: 'Já existe uma imagem com esta ordem nesta seção'
-        });
-      }
-    }
-
     await imagem.update({
       conteudo: conteudo || imagem.conteudo,
       descricao: descricao !== undefined ? descricao : imagem.descricao,
