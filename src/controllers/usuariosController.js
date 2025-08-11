@@ -2,6 +2,7 @@ const sequelize = require('../config/database');
 const { UsuariosModel, UsuariosTiposModel } = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 
 // Obter todos os usuários
 const getAllUsuarios = async (req, res, next) => {
@@ -209,10 +210,108 @@ const getPerfilUsuario = async (req, res, next) => {
   }
 };
 
+// Autenticação com Google
+const googleAuth = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token do Google é obrigatório'
+      });
+    }
+
+    // Verificar o token com o Google
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    
+    if (!payload) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token inválido'
+      });
+    }
+
+    // Buscar ou criar usuário no banco de dados
+    let usuario = await UsuariosModel.findOne({ 
+      where: { email: payload.email },
+      include: [
+        {
+          model: UsuariosTiposModel,
+          as: 'tipoUsuario',
+          attributes: ['id', 'nome']
+        }
+      ]
+    });
+
+    // Se o usuário não existe, criar um novo com tipo "aluno" (id: 3)
+    if (!usuario) {
+      const novoUsuario = await UsuariosModel.create({
+        nome: payload.name,
+        email: payload.email,
+        senha: null, // Usuários do Google não têm senha local
+        id_usuarios_tipos: 3, // Tipo "aluno" por padrão
+        google_id: payload.sub // ID único do Google
+      });
+
+      usuario = await UsuariosModel.findByPk(novoUsuario.id, {
+        include: [
+          {
+            model: UsuariosTiposModel,
+            as: 'tipoUsuario',
+            attributes: ['id', 'nome']
+          }
+        ]
+      });
+    }
+
+    // Gerar JWT token para a aplicação
+    const jwtToken = jwt.sign(
+      { 
+        id: usuario.id, 
+        email: usuario.email, 
+        tipoUsuario: usuario.id_usuarios_tipos 
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Autenticação com Google realizada com sucesso',
+      data: {
+        token: jwtToken,
+        user: {
+          id: usuario.id,
+          email: payload.email,
+          name: payload.name,
+          picture: payload.picture,
+          tipoUsuario: usuario.tipoUsuario
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro na autenticação Google:', error);
+    return res.status(400).json({
+      success: false,
+      message: 'Token inválido ou erro na autenticação'
+    });
+  }
+};
+
 module.exports = {
   getAllUsuarios,
   getUsuarioById,
   registrarUsuario,
   loginUsuario,
-  getPerfilUsuario
+  getPerfilUsuario,
+  googleAuth
 };

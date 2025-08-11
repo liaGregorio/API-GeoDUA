@@ -10,6 +10,9 @@ router.post('/registro', usuariosController.registrarUsuario);
 // Rota para login de usuário
 router.post('/login', usuariosController.loginUsuario);
 
+// Rota para autenticação com Google
+router.post('/auth/google', usuariosController.googleAuth);
+
 // Rotas protegidas (necessário estar logado)
 // Rota para obter perfil do usuário logado
 router.get('/perfil', authenticateToken, usuariosController.getPerfilUsuario);

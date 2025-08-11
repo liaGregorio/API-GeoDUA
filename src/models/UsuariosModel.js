@@ -22,7 +22,7 @@ const UsuariosModel = sequelize.define('UsuariosModel', {
   },
   senha: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true // Permitir null para usuários do Google
   },
   id_usuarios_tipos: {
     type: DataTypes.INTEGER,
@@ -31,6 +31,11 @@ const UsuariosModel = sequelize.define('UsuariosModel', {
       model: 'usuarios_tipos',
       key: 'id'
     }
+  },
+  google_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true
   }
 }, {
   tableName: 'usuarios',       
