@@ -1,4 +1,4 @@
-const { SecaoModel, CapituloModel, ImagemModel } = require('../models');
+const { SecaoModel, CapituloModel, ImagemModel, UsuariosModel } = require('../models');
 
 // GET - Listar seções de um capítulo específico
 const getSecoes = async (req, res) => {
