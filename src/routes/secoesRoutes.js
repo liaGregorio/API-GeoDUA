@@ -5,7 +5,8 @@ const {
   getSecaoById, 
   createSecao,
   updateSecao,
-  deleteSecao
+  deleteSecao,
+  salvarSecoesComoRascunho
 } = require('../controllers/secoesController');
 
 // GET /api/secoes/capitulo/:idCapitulo - Listar seções de um capítulo específico
@@ -22,5 +23,8 @@ router.put('/:id', updateSecao);
 
 // DELETE /api/secoes/:id - Deletar seção
 router.delete('/:id', deleteSecao);
+
+// POST /api/secoes/salvar-rascunho - Salvar seções como rascunho
+router.post('/salvar-rascunho', salvarSecoesComoRascunho);
 
 module.exports = router;

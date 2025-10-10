@@ -335,10 +335,18 @@ const deleteCapitulo = async (req, res) => {
   }
 };
 
-// GET - Buscar rascunhos de um usuário
-const getRascunhosByUsuario = async (req, res) => {
+const getRascunhosByCapituloUsuario = async (req, res) => {
   try {
-    const { idUsuario } = req.params;
+    const { idCapitulo, idUsuario } = req.params;
+
+    // Verificar se o capítulo original existe
+    const capituloOriginal = await CapituloModel.findByPk(idCapitulo);
+    if (!capituloOriginal) {
+      return res.status(404).json({
+        success: false,
+        message: 'Capítulo original não encontrado'
+      });
+    }
 
     // Verificar se o usuário existe
     const usuario = await UsuariosModel.findByPk(idUsuario);
@@ -349,22 +357,22 @@ const getRascunhosByUsuario = async (req, res) => {
       });
     }
 
-    // Buscar rascunhos do usuário (capítulos que têm id_capitulo_original)
+    // Buscar rascunhos do usuário para este capítulo
     const rascunhos = await CapituloModel.findAll({
       where: { 
         id_usuario: idUsuario,
-        id_capitulo_original: { [require('sequelize').Op.ne]: null }
+        id_capitulo_original: idCapitulo
       },
       include: [
         {
+          model: LivroModel,
+          as: 'livro',
+          attributes: ['id', 'nome']
+        },
+        {
           model: CapituloModel,
           as: 'capituloOriginal',
-          attributes: ['id', 'nome'],
-          include: [{
-            model: LivroModel,
-            as: 'livro',
-            attributes: ['id', 'nome']
-          }]
+          attributes: ['id', 'nome']
         }
       ],
       order: [['id', 'DESC']]
@@ -376,77 +384,7 @@ const getRascunhosByUsuario = async (req, res) => {
       message: 'Rascunhos encontrados com sucesso'
     });
   } catch (error) {
-    console.error('Erro ao buscar rascunhos:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-};
-
-// POST - Criar rascunho
-const createRascunho = async (req, res) => {
-  try {
-    const { id_usuario, id_capitulo_original, nome } = req.body;
-
-    // Validações básicas
-    if (!id_usuario || !id_capitulo_original) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID do usuário e ID do capítulo original são obrigatórios'
-      });
-    }
-
-    // Verificar se o usuário existe
-    const usuario = await UsuariosModel.findByPk(id_usuario);
-    if (!usuario) {
-      return res.status(404).json({
-        success: false,
-        message: 'Usuário não encontrado'
-      });
-    }
-
-    // Verificar se o capítulo original existe
-    const capituloOriginal = await CapituloModel.findByPk(id_capitulo_original);
-    if (!capituloOriginal) {
-      return res.status(404).json({
-        success: false,
-        message: 'Capítulo original não encontrado'
-      });
-    }
-
-    // Verificar se já existe um rascunho deste usuário para este capítulo
-    const rascunhoExistente = await CapituloModel.findOne({
-      where: {
-        id_usuario,
-        id_capitulo_original
-      }
-    });
-
-    if (rascunhoExistente) {
-      return res.status(400).json({
-        success: false,
-        message: 'Já existe um rascunho deste usuário para este capítulo',
-        data: rascunhoExistente
-      });
-    }
-
-    // Criar o rascunho
-    const novoRascunho = await CapituloModel.create({
-      nome: nome || `Rascunho - ${capituloOriginal.nome}`,
-      id_livro: capituloOriginal.id_livro,
-      id_usuario,
-      id_capitulo_original
-    });
-
-    res.status(201).json({
-      success: true,
-      data: novoRascunho,
-      message: 'Rascunho criado com sucesso'
-    });
-  } catch (error) {
-    console.error('Erro ao criar rascunho:', error);
+    console.error('Erro ao buscar rascunhos do capítulo:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -461,6 +399,5 @@ module.exports = {
   createCapitulo,
   updateCapitulo,
   deleteCapitulo,
-  getRascunhosByUsuario,
-  createRascunho
+  getRascunhosByCapituloUsuario
 };

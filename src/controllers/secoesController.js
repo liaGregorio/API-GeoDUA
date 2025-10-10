@@ -255,10 +255,141 @@ const deleteSecao = async (req, res) => {
   }
 };
 
+const salvarSecoesComoRascunho = async (req, res) => {
+  try {
+    const { id_capitulo_original, secoes, id_usuario } = req.body;
+
+    // Validações básicas
+    if (!id_capitulo_original || !id_usuario || !Array.isArray(secoes)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Campos obrigatórios: id_capitulo_original, id_usuario e secoes (array)'
+      });
+    }
+
+    // Verificar se o capítulo original existe
+    const capituloOriginal = await CapituloModel.findByPk(id_capitulo_original);
+    if (!capituloOriginal) {
+      return res.status(404).json({
+        success: false,
+        message: 'Capítulo original não encontrado'
+      });
+    }
+
+    // Verificar se o usuário existe
+    const usuario = await UsuariosModel.findByPk(id_usuario);
+    if (!usuario) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    let rascunho;
+
+    // Verificar se já existe um rascunho deste usuário para este capítulo
+    const rascunhoExistente = await CapituloModel.findOne({
+      where: {
+        id_usuario,
+        id_capitulo_original
+      }
+    });
+
+    if (rascunhoExistente) {
+      rascunho = rascunhoExistente;
+      
+      // Excluir seções e imagens existentes do rascunho
+      const secoesExistentes = await SecaoModel.findAll({
+        where: { id_capitulo: rascunho.id }
+      });
+
+      if (secoesExistentes.length > 0) {
+        const idsSecoes = secoesExistentes.map(s => s.id);
+        
+        // Excluir imagens das seções
+        await ImagemModel.destroy({
+          where: { id_secao: idsSecoes }
+        });
+
+        // Excluir seções
+        await SecaoModel.destroy({
+          where: { id_capitulo: rascunho.id }
+        });
+      }
+    } else {
+      // Criar novo rascunho
+      rascunho = await CapituloModel.create({
+        nome: `Rascunho - ${capituloOriginal.nome}`,
+        id_livro: capituloOriginal.id_livro,
+        id_usuario,
+        id_capitulo_original
+      });
+    }
+
+    // Salvar seções no rascunho
+    const secoesRascunho = [];
+    
+    for (const secaoData of secoes) {
+      // Criar a seção
+      const novaSecao = await SecaoModel.create({
+        prompt: secaoData.prompt || null,
+        titulo: secaoData.titulo || null,
+        resumo: secaoData.resumo || null,
+        ordem: secaoData.ordem,
+        original: secaoData.original || null,
+        link3d: secaoData.link3d || null,
+        feedback: secaoData.feedback !== undefined ? secaoData.feedback : false,
+        ordem3d: secaoData.ordem3d || null,
+        id_capitulo: rascunho.id
+      });
+
+      // Salvar imagens da seção (se houver)
+      if (secaoData.imagens && Array.isArray(secaoData.imagens)) {
+        for (let i = 0; i < secaoData.imagens.length; i++) {
+          const imagemData = secaoData.imagens[i];
+          await ImagemModel.create({
+            conteudo: imagemData.conteudo,
+            descricao: imagemData.descricao || null,
+            content_type: imagemData.content_type,
+            ordem: imagemData.ordem || (i + 1),
+            id_secao: novaSecao.id
+          });
+        }
+      }
+
+      secoesRascunho.push(novaSecao);
+    }
+
+    // Atualizar timestamp do rascunho se for um update
+    if (rascunhoExistente) {
+      await rascunho.update({ 
+        nome: `Rascunho - ${capituloOriginal.nome}` 
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      data: {
+        rascunho,
+        secoes: secoesRascunho
+      },
+      message: `Rascunho ${rascunhoExistente ? 'atualizado' : 'criado'} com sucesso`
+    });
+  } catch (error) {
+    console.error('Erro ao salvar rascunho:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   getSecoes,
   getSecaoById,
   createSecao,
   updateSecao,
-  deleteSecao
+  deleteSecao,
+  salvarSecoesComoRascunho
 };
