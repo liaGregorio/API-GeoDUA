@@ -15,7 +15,7 @@ const getCapitulos = async (req, res) => {
     }
 
     const capitulos = await CapituloModel.findAll({
-      where: { id_livro: idLivro },
+      where: { id_livro: idLivro, id_capitulo_original: null },
       include: [
         {
           model: LivroModel,
