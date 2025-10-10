@@ -393,11 +393,109 @@ const getRascunhosByCapituloUsuario = async (req, res) => {
   }
 };
 
+const publicarRascunho = async (req, res) => {
+  try {
+    const { id: rascunhoId } = req.params;
+    const { id_capitulo_destino } = req.body;
+
+    // Validações
+    if (!id_capitulo_destino) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID do capítulo destino é obrigatório'
+      });
+    }
+
+    // Verificar se o rascunho existe
+    const rascunho = await CapituloModel.findByPk(rascunhoId, {
+      where: { id_capitulo_original: { [require('sequelize').Op.ne]: null } }
+    });
+
+    if (!rascunho || !rascunho.id_capitulo_original) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rascunho não encontrado'
+      });
+    }
+
+    // Verificar se o capítulo destino existe
+    const capituloDestino = await CapituloModel.findByPk(id_capitulo_destino);
+    if (!capituloDestino) {
+      return res.status(404).json({
+        success: false,
+        message: 'Capítulo destino não encontrado'
+      });
+    }
+
+    // Transação para garantir consistência
+    const transaction = await require('../config/database').transaction();
+
+    try {
+      // 1. Excluir seções e imagens do capítulo destino
+      const secoesDestino = await SecaoModel.findAll({
+        where: { id_capitulo: id_capitulo_destino },
+        transaction
+      });
+
+      if (secoesDestino.length > 0) {
+        const idsSecoesDestino = secoesDestino.map(s => s.id);
+        
+        // Excluir imagens das seções
+        await ImagemModel.destroy({
+          where: { id_secao: idsSecoesDestino },
+          transaction
+        });
+
+        // Excluir seções
+        await SecaoModel.destroy({
+          where: { id_capitulo: id_capitulo_destino },
+          transaction
+        });
+      }
+
+      // 2. Mover seções do rascunho para o capítulo destino
+      await SecaoModel.update(
+        { id_capitulo: id_capitulo_destino },
+        { 
+          where: { id_capitulo: rascunhoId },
+          transaction
+        }
+      );
+
+      // 3. Excluir o rascunho
+      await CapituloModel.destroy({
+        where: { id: rascunhoId },
+        transaction
+      });
+
+      await transaction.commit();
+
+      res.status(200).json({
+        success: true,
+        message: 'Rascunho publicado com sucesso'
+      });
+
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+
+  } catch (error) {
+    console.error('Erro ao publicar rascunho:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   getCapitulos,
   getCapituloById,
   createCapitulo,
   updateCapitulo,
   deleteCapitulo,
-  getRascunhosByCapituloUsuario
+  getRascunhosByCapituloUsuario,
+  publicarRascunho
 };
