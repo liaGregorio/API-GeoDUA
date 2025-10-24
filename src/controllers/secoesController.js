@@ -117,7 +117,7 @@ const createSecao = async (req, res) => {
       ordem,
       original,
       link3d,
-      feedback: feedback || false,
+      feedback,
       ordem3d,
       id_capitulo
     });
