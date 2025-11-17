@@ -20,6 +20,9 @@ router.get('/perfil', authenticateToken, usuariosController.getPerfilUsuario);
 // Rota para obter todos os usuários - apenas admins
 router.get('/', authenticateToken, requireAdmin, usuariosController.getAllUsuarios);
 
+// Rota para obter contagem de usuários por tipo - apenas admins
+router.get('/contagem', authenticateToken, requireAdmin, usuariosController.getContagemUsuarios);
+
 // Rota para obter um usuário específico pelo ID - apenas admins
 router.get('/:id', authenticateToken, requireAdmin, usuariosController.getUsuarioById);
 

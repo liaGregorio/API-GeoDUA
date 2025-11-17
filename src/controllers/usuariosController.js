@@ -28,6 +28,27 @@ const getAllUsuarios = async (req, res, next) => {
   }
 };
 
+// Obter contagem de usuários por tipo
+const getContagemUsuarios = async (req, res, next) => {
+  try {
+    const [quantidadeProfessores, quantidadeAlunos] = await Promise.all([
+      UsuariosModel.count({ where: { id_usuarios_tipos: 2 } }), // Professores
+      UsuariosModel.count({ where: { id_usuarios_tipos: 3 } })  // Alunos
+    ]);
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        professores: quantidadeProfessores,
+        alunos: quantidadeAlunos,
+        total: quantidadeProfessores + quantidadeAlunos
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Obter um usuário pelo ID
 const getUsuarioById = async (req, res, next) => {
   try {
@@ -309,6 +330,7 @@ const googleAuth = async (req, res, next) => {
 
 module.exports = {
   getAllUsuarios,
+  getContagemUsuarios,
   getUsuarioById,
   registrarUsuario,
   loginUsuario,
