@@ -1,5 +1,25 @@
 const { AudioModel, CapituloModel } = require('../models');
 
+/**
+ * Função auxiliar para converter BLOB para base64
+ */
+const formatAudioResponse = (audio) => {
+  if (!audio) return null;
+  
+  const audioData = audio.toJSON();
+  
+  // Converter Buffer/BLOB para base64 string
+  if (audioData.conteudo) {
+    if (Buffer.isBuffer(audioData.conteudo)) {
+      audioData.conteudo = audioData.conteudo.toString('base64');
+    } else if (audioData.conteudo.type === 'Buffer' && Array.isArray(audioData.conteudo.data)) {
+      audioData.conteudo = Buffer.from(audioData.conteudo.data).toString('base64');
+    }
+  }
+  
+  return audioData;
+};
+
 // GET - Listar áudios de um capítulo específico
 const getAudios = async (req, res) => {
   try {
@@ -26,9 +46,12 @@ const getAudios = async (req, res) => {
       order: [['id', 'ASC']]
     });
 
+    // Converter BLOBs para base64
+    const audiosFormatados = audios.map(audio => formatAudioResponse(audio));
+
     res.status(200).json({
       success: true,
-      data: audios,
+      data: audiosFormatados,
       message: 'Áudios listados com sucesso'
     });
   } catch (error) {
@@ -63,9 +86,11 @@ const getAudioById = async (req, res) => {
       });
     }
 
+    const audioFormatado = formatAudioResponse(audio);
+
     res.status(200).json({
       success: true,
-      data: audio,
+      data: audioFormatado,
       message: 'Áudio encontrado com sucesso'
     });
   } catch (error) {
@@ -100,8 +125,11 @@ const createAudio = async (req, res) => {
       });
     }
 
+    // Converter base64 para Buffer antes de salvar
+    const audioBuffer = Buffer.from(conteudo, 'base64');
+
     const novoAudio = await AudioModel.create({
-      conteudo,
+      conteudo: audioBuffer,
       content_type,
       id_capitulo
     });
@@ -116,9 +144,11 @@ const createAudio = async (req, res) => {
       ]
     });
 
+    const audioFormatado = formatAudioResponse(audioCriado);
+
     res.status(201).json({
       success: true,
-      data: audioCriado,
+      data: audioFormatado,
       message: 'Áudio criado com sucesso'
     });
   } catch (error) {
@@ -156,11 +186,18 @@ const updateAudio = async (req, res) => {
       }
     }
 
-    await audio.update({
-      conteudo: conteudo || audio.conteudo,
+    // Preparar dados para atualização
+    const updateData = {
       content_type: content_type || audio.content_type,
       id_capitulo: id_capitulo || audio.id_capitulo
-    });
+    };
+
+    // Se houver novo conteúdo, converter de base64 para Buffer
+    if (conteudo) {
+      updateData.conteudo = Buffer.from(conteudo, 'base64');
+    }
+
+    await audio.update(updateData);
 
     const audioAtualizado = await AudioModel.findByPk(id, {
       include: [
@@ -172,9 +209,11 @@ const updateAudio = async (req, res) => {
       ]
     });
 
+    const audioFormatado = formatAudioResponse(audioAtualizado);
+
     res.status(200).json({
       success: true,
-      data: audioAtualizado,
+      data: audioFormatado,
       message: 'Áudio atualizado com sucesso'
     });
   } catch (error) {
