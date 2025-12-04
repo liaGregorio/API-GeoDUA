@@ -430,6 +430,7 @@ const getRascunhosByUsuario = async (req, res) => {
     // Formatar os dados conforme solicitado
     const rascunhosFormatados = rascunhos.map(rascunho => ({
       id: rascunho.id,
+      nome: rascunho.nome,
       id_capitulo_original: rascunho.id_capitulo_original,
       livro_titulo: rascunho.livro?.nome || null,
       capitulo_titulo: rascunho.capituloOriginal?.nome || null
