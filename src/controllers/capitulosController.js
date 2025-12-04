@@ -393,6 +393,63 @@ const getRascunhosByCapituloUsuario = async (req, res) => {
   }
 };
 
+const getRascunhosByUsuario = async (req, res) => {
+  try {
+    const { idUsuario } = req.params;
+
+    // Verificar se o usuário existe
+    const usuario = await UsuariosModel.findByPk(idUsuario);
+    if (!usuario) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    // Buscar todos os rascunhos do usuário
+    const rascunhos = await CapituloModel.findAll({
+      where: { 
+        id_usuario: idUsuario,
+        id_capitulo_original: { [require('sequelize').Op.ne]: null }
+      },
+      include: [
+        {
+          model: LivroModel,
+          as: 'livro',
+          attributes: ['id', 'nome']
+        },
+        {
+          model: CapituloModel,
+          as: 'capituloOriginal',
+          attributes: ['id', 'nome']
+        }
+      ],
+      order: [['id', 'DESC']]
+    });
+
+    // Formatar os dados conforme solicitado
+    const rascunhosFormatados = rascunhos.map(rascunho => ({
+      id: rascunho.id,
+      id_capitulo_original: rascunho.id_capitulo_original,
+      livro_titulo: rascunho.livro?.nome || null,
+      capitulo_titulo: rascunho.capituloOriginal?.nome || null
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: rascunhosFormatados,
+      message: 'Rascunhos do usuário encontrados com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao buscar rascunhos do usuário:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 const publicarRascunho = async (req, res) => {
   try {
     const { id: rascunhoId } = req.params;
@@ -497,5 +554,6 @@ module.exports = {
   updateCapitulo,
   deleteCapitulo,
   getRascunhosByCapituloUsuario,
+  getRascunhosByUsuario,
   publicarRascunho
 };

@@ -7,6 +7,7 @@ const {
   updateCapitulo,
   deleteCapitulo,
   getRascunhosByCapituloUsuario,
+  getRascunhosByUsuario,
   publicarRascunho
 } = require('../controllers/capitulosController');
 
@@ -27,6 +28,9 @@ router.delete('/:id', deleteCapitulo);
 
 // GET /api/capitulos/:idCapitulo/rascunhos/usuario/:idUsuario - Buscar rascunhos de um capítulo específico para um usuário
 router.get('/:idCapitulo/rascunhos/usuario/:idUsuario', getRascunhosByCapituloUsuario);
+
+// GET /api/capitulos/rascunhos/usuario/:idUsuario - Buscar todos os rascunhos de um usuário
+router.get('/rascunhos/usuario/:idUsuario', getRascunhosByUsuario);
 
 // POST /api/capitulos/:id/publicar - Publicar rascunho
 router.post('/:id/publicar', publicarRascunho);
